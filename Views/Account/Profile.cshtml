@@ -1,0 +1,59 @@
+@model InternalMarksSystem.Models.ApplicationUser
+@{
+    ViewData["Title"] = "User Profile";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="card card-academic shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-person-circle me-2"></i> User Profile</span>
+                <span class="badge bg-primary">@Model.UserRole</span>
+            </div>
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 64px; height: 64px; font-size: 1.5rem; font-weight: bold;">
+                        @(Model.FullName.Length > 0 ? Model.FullName[0].ToString().ToUpper() : "U")
+                    </div>
+                    <div>
+                        <h4 class="mb-0 fw-bold">@Model.FullName</h4>
+                        <div class="text-muted">@Model.Email</div>
+                        <div class="small text-secondary mt-1"><i class="bi bi-calendar-check me-1"></i> Account created: @Model.CreatedAtUtc.ToString("MMMM dd, yyyy")</div>
+                    </div>
+                </div>
+
+                <hr class="text-muted" />
+
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <label class="form-label text-muted small text-uppercase">Role</label>
+                        <div class="fw-semibold">@Model.UserRole</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label text-muted small text-uppercase">Username</label>
+                        <div class="fw-semibold">@Model.UserName</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label text-muted small text-uppercase">Status</label>
+                        <div>
+                            @if (Model.IsActive)
+                            {
+                                <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-check-circle me-1"></i>Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Inactive</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-top d-flex justify-content-between">
+                    <a asp-controller="Dashboard" asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,157 @@
+@model IEnumerable<InternalMarksSystem.Models.Subject>
+@{
+    ViewData["Title"] = "Subject & Scheme Management";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="fw-bold text-dark mb-0">Subjects & Assessment Schemes</h3>
+        <p class="text-muted small mb-0">Configure academic subjects, credits, maximum internal marks, and evaluation components</p>
+    </div>
+    @if (User.IsInRole("Admin"))
+    {
+        <a asp-action="Create" class="btn btn-academic shadow-sm">
+            <i class="bi bi-journal-plus me-1"></i> Add New Subject
+        </a>
+    }
+</div>
+
+<!-- Search and Filter Bar -->
+<div class="card card-academic shadow-sm mb-4">
+    <div class="card-body p-3">
+        <form method="get" asp-action="Index" class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-light text-muted"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Search by subject code or name..." value="@ViewBag.CurrentSearch" />
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select name="departmentId" asp-items="ViewBag.Departments" class="form-select">
+                    <option value="">-- All Departments --</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="semesterId" asp-items="ViewBag.Semesters" class="form-select">
+                    <option value="">-- All Semesters --</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-funnel-fill me-1"></i> Filter
+                </button>
+                <a asp-action="Index" class="btn btn-outline-secondary" title="Reset Filters">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Subjects Table -->
+<div class="card card-academic shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-academic align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Subject Title</th>
+                        <th>Department</th>
+                        <th>Semester</th>
+                        <th>Credits</th>
+                        <th>Max / Pass</th>
+                        <th>Assigned Faculty</th>
+                        <th>Components</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Any())
+                    {
+                        @foreach (var s in Model)
+                        {
+                            var facultyName = s.FacultyAssignments.FirstOrDefault()?.FacultyProfile?.FullName;
+                            <tr>
+                                <td>
+                                    <span class="badge bg-dark-subtle text-dark font-monospace px-2 py-1">@s.SubjectCode</span>
+                                </td>
+                                <td class="fw-semibold">@s.SubjectName</td>
+                                <td><span class="badge bg-secondary-subtle text-secondary">@s.Department?.Code</span></td>
+                                <td><span class="badge bg-light text-secondary border">@s.Semester?.Name</span></td>
+                                <td>@s.Credits</td>
+                                <td>
+                                    <span class="fw-bold">@s.MaxInternalMarks.ToString("0.#")</span>
+                                    <span class="text-muted small">/ @s.PassingMarks.ToString("0.#")</span>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(facultyName))
+                                    {
+                                        <span class="small fw-semibold text-primary"><i class="bi bi-person-check me-1"></i>@facultyName</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning-subtle text-warning">Unassigned</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle">
+                                        @s.AssessmentComponents.Count components
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <a asp-action="ConfigureComponents" asp-route-id="@s.Id" class="btn btn-outline-warning btn-sm" title="Configure Assessment Weights">
+                                        <i class="bi bi-sliders"></i> Weights
+                                    </a>
+                                    <a asp-controller="Marks" asp-action="Enter" asp-route-subjectId="@s.Id" class="btn btn-outline-primary btn-sm ms-1" title="Enter Marks">
+                                        <i class="bi bi-pencil-fill"></i> Marks
+                                    </a>
+                                    <a asp-action="Details" asp-route-id="@s.Id" class="btn btn-outline-info btn-sm ms-1">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@s.Id" class="btn btn-outline-secondary btn-sm ms-1">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-outline-danger btn-sm ms-1" data-bs-toggle="modal" data-bs-target="#deleteModal-@s.Id">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+
+                                        <!-- Delete Confirmation Modal -->
+                                        <div class="modal fade" id="deleteModal-@s.Id" tabindex="-1" aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-centered">
+                                                <div class="modal-content">
+                                                    <div class="modal-header border-0">
+                                                        <h5 class="modal-title fw-bold text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i> Delete Subject</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body text-start">
+                                                        Are you sure you want to delete <strong>@s.SubjectCode - @s.SubjectName</strong>?
+                                                    </div>
+                                                    <div class="modal-footer border-0">
+                                                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                        <form asp-action="Delete" asp-route-id="@s.Id" method="post">
+                                                            @Html.AntiForgeryToken()
+                                                            <button type="submit" class="btn btn-danger">Confirm Delete</button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-4">No subjects found matching your criteria.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

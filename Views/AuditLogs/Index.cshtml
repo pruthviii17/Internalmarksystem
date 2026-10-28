@@ -1,0 +1,120 @@
+@model IEnumerable<InternalMarksSystem.Models.AuditLog>
+@{
+    ViewData["Title"] = "System Audit Trail";
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="fw-bold text-dark mb-0">System Governance & Audit Trail</h3>
+        <p class="text-muted small mb-0">Immutable records of all marks entries, status modifications, submissions, approvals, and publications</p>
+    </div>
+</div>
+
+<!-- Search & Filter Bar -->
+<div class="card card-academic shadow-sm mb-4">
+    <div class="card-body p-3">
+        <form method="get" asp-action="Index" class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-light text-muted"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Search by user, action details, or entity..." value="@ViewBag.CurrentSearch" />
+                </div>
+            </div>
+            <div class="col-md-4">
+                <select name="actionFilter" class="form-select">
+                    <option value="">-- All Actions --</option>
+                    @if (ViewBag.ActionList != null)
+                    {
+                        foreach (string act in ViewBag.ActionList)
+                        {
+                            <!option value="@act" @(ViewBag.CurrentAction == act ? "selected" : "")>@act</!option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-funnel-fill me-1"></i> Filter
+                </button>
+                <a asp-action="Index" class="btn btn-outline-secondary" title="Reset">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Logs Table -->
+<div class="card card-academic shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-academic align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Timestamp (UTC)</th>
+                        <th>Action</th>
+                        <th>User</th>
+                        <th>Role</th>
+                        <th>Target Entity</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Any())
+                    {
+                        @foreach (var log in Model)
+                        {
+                            <tr>
+                                <td class="small text-muted font-monospace" style="white-space: nowrap;">
+                                    @log.TimestampUtc.ToString("yyyy-MM-dd HH:mm:ss")
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border">@log.Action</span>
+                                </td>
+                                <td class="fw-semibold small">@log.UserName</td>
+                                <td>
+                                    <span class="badge bg-secondary-subtle text-secondary">@log.UserRole</span>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(log.EntityName))
+                                    {
+                                        <span class="small text-muted">@log.EntityName (@log.EntityId)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td class="small text-secondary" style="max-width: 380px;">
+                                    @log.Details
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">No audit logs found.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @if (totalPages > 1)
+    {
+        <div class="card-footer bg-white border-top d-flex justify-content-between align-items-center py-2 px-3">
+            <span class="small text-muted">Showing page @currentPage of @totalPages (Total: @ViewBag.TotalItems records)</span>
+            <ul class="pagination pagination-sm mb-0">
+                @for (int p = 1; p <= totalPages; p++)
+                {
+                    <li class="page-item @(p == currentPage ? "active" : "")">
+                        <a class="page-link" asp-action="Index" asp-route-page="@p" asp-route-search="@ViewBag.CurrentSearch" asp-route-actionFilter="@ViewBag.CurrentAction">@p</a>
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+</div>

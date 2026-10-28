@@ -1,0 +1,104 @@
+@model InternalMarksSystem.Models.FacultyProfile
+@{
+    ViewData["Title"] = $"Assign Subjects - {Model.FullName}";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <div class="card card-academic shadow-sm mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="bi bi-person-workspace text-primary me-2"></i> Assign Subject to Faculty</span>
+                <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i> Back to Faculty List</a>
+            </div>
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-4 pb-3 border-bottom">
+                    <div class="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; font-size: 1.25rem;">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0 fw-bold">@Model.FullName</h5>
+                        <div class="text-muted small">@Model.EmployeeCode &bull; @Model.Designation &bull; @Model.Department?.Name</div>
+                    </div>
+                </div>
+
+                <!-- Assignment Form -->
+                <form asp-action="AssignSubject" method="post" class="row g-3 align-items-end">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="facultyProfileId" value="@Model.Id" />
+
+                    <div class="col-md-6">
+                        <label class="form-label">Subject</label>
+                        <select name="subjectId" class="form-select" asp-items="ViewBag.Subjects" required>
+                            <option value="">-- Choose Subject to Allocate --</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Semester</label>
+                        <select name="semesterId" class="form-select" asp-items="ViewBag.Semesters" required>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-plus-circle me-1"></i> Allocate Subject
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Current Assignments Table -->
+        <div class="card card-academic shadow-sm">
+            <div class="card-header fw-bold">
+                <i class="bi bi-journal-check text-primary me-2"></i>Currently Assigned Subjects
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-academic align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Subject Code</th>
+                                <th>Subject Name</th>
+                                <th>Semester</th>
+                                <th>Academic Year</th>
+                                <th>Assigned Date</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.AssignedSubjects.Any())
+                            {
+                                @foreach (var assignment in Model.AssignedSubjects)
+                                {
+                                    <tr>
+                                        <td><code>@assignment.Subject?.SubjectCode</code></td>
+                                        <td class="fw-semibold">@assignment.Subject?.SubjectName</td>
+                                        <td><span class="badge bg-light text-secondary border">@assignment.Semester?.Name</span></td>
+                                        <td>@assignment.AcademicYear</td>
+                                        <td class="small text-muted">@assignment.AssignedAtUtc.ToString("d")</td>
+                                        <td class="text-end">
+                                            <form asp-action="RemoveAssignment" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to remove this subject assignment?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="assignmentId" value="@assignment.Id" />
+                                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                    <i class="bi bi-trash me-1"></i> Remove
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4">No subjects currently assigned to this faculty member.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,182 @@
+@model InternalMarksSystem.ViewModels.SubjectComponentConfigViewModel
+@{
+    ViewData["Title"] = $"Configure Assessment Weights - {Model.SubjectCode}";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card card-academic shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="fw-bold"><i class="bi bi-sliders text-primary me-2"></i> Configure Assessment Components & Weights</span>
+                    <span class="badge bg-light text-dark border ms-2">@Model.SubjectCode - @Model.SubjectName</span>
+                </div>
+                <a asp-action="Details" asp-route-id="@Model.SubjectId" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i> Back
+                </a>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-info py-2 small mb-4">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Configure the assessment components for this subject. The <strong>Sum of Weight Percentages must equal exactly 100%</strong>. Maximum Internal Marks for this subject is <strong>@Model.MaxInternalMarks.ToString("0.#")</strong>.
+                </div>
+
+                <form asp-action="ConfigureComponents" method="post" id="componentsForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="SubjectId" />
+                    <input type="hidden" asp-for="SubjectCode" />
+                    <input type="hidden" asp-for="SubjectName" />
+                    <input type="hidden" asp-for="MaxInternalMarks" />
+                    <input type="hidden" asp-for="PassingMarks" />
+
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
+
+                    <div class="table-responsive mb-3">
+                        <table class="table table-bordered align-middle" id="componentsTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 40%;">Component Name</th>
+                                    <th style="width: 25%;">Maximum Marks</th>
+                                    <th style="width: 25%;">Weight Percentage (%)</th>
+                                    <th style="width: 10%;" class="text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int i = 0; i < Model.Components.Count; i++)
+                                {
+                                    <tr>
+                                        <td>
+                                            <input type="hidden" name="Components[@i].Id" value="@Model.Components[i].Id" />
+                                            <input type="text" name="Components[@i].Name" value="@Model.Components[i].Name" class="form-control" required placeholder="e.g. Internal Test 1" />
+                                        </td>
+                                        <td>
+                                            <input type="number" step="0.5" min="1" max="100" name="Components[@i].MaxMarks" value="@Model.Components[i].MaxMarks" class="form-control" required />
+                                        </td>
+                                        <td>
+                                            <div class="input-group">
+                                                <input type="number" step="0.5" min="1" max="100" name="Components[@i].WeightPercentage" value="@Model.Components[i].WeightPercentage" class="form-control weight-input" required />
+                                                <span class="input-group-text">%</span>
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <button type="button" class="btn btn-outline-danger btn-sm remove-row-btn" title="Remove Component">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <th colspan="2" class="text-end">Total Weight Percentage:</th>
+                                    <th>
+                                        <span id="totalWeightDisplay" class="fw-bold fs-6">0%</span>
+                                    </th>
+                                    <th></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="addRowBtn">
+                            <i class="bi bi-plus-circle me-1"></i> Add Another Component
+                        </button>
+
+                        <div class="d-flex gap-2">
+                            <a asp-action="Details" asp-route-id="@Model.SubjectId" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary px-4" id="submitBtn">
+                                <i class="bi bi-save me-1"></i> Save Assessment Scheme
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function updateTotalWeight() {
+            let total = 0;
+            document.querySelectorAll('.weight-input').forEach(input => {
+                let val = parseFloat(input.value);
+                if (!isNaN(val)) total += val;
+            });
+
+            total = Math.round(total * 100) / 100;
+            const display = document.getElementById('totalWeightDisplay');
+            display.textContent = total + '%';
+
+            if (Math.abs(total - 100) < 0.01) {
+                display.className = 'fw-bold fs-6 text-success';
+                document.getElementById('submitBtn').disabled = false;
+            } else {
+                display.className = 'fw-bold fs-6 text-danger';
+                display.textContent += ' (Must equal 100%)';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            updateTotalWeight();
+
+            document.getElementById('componentsTable').addEventListener('input', function (e) {
+                if (e.target.classList.contains('weight-input')) {
+                    updateTotalWeight();
+                }
+            });
+
+            document.getElementById('componentsTable').addEventListener('click', function (e) {
+                if (e.target.closest('.remove-row-btn')) {
+                    const row = e.target.closest('tr');
+                    const tbody = row.parentElement;
+                    if (tbody.children.length > 1) {
+                        row.remove();
+                        reindexRows();
+                        updateTotalWeight();
+                    } else {
+                        alert('At least one assessment component is required.');
+                    }
+                }
+            });
+
+            document.getElementById('addRowBtn').addEventListener('click', function () {
+                const tbody = document.querySelector('#componentsTable tbody');
+                const newIndex = tbody.children.length;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <input type="hidden" name="Components[${newIndex}].Id" value="0" />
+                        <input type="text" name="Components[${newIndex}].Name" class="form-control" required placeholder="e.g. Seminar / Viva" />
+                    </td>
+                    <td>
+                        <input type="number" step="0.5" min="1" max="100" name="Components[${newIndex}].MaxMarks" value="20" class="form-control" required />
+                    </td>
+                    <td>
+                        <div class="input-group">
+                            <input type="number" step="0.5" min="1" max="100" name="Components[${newIndex}].WeightPercentage" value="20" class="form-control weight-input" required />
+                            <span class="input-group-text">%</span>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-outline-danger btn-sm remove-row-btn" title="Remove Component">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+                updateTotalWeight();
+            });
+
+            function reindexRows() {
+                const rows = document.querySelectorAll('#componentsTable tbody tr');
+                rows.forEach((row, idx) => {
+                    row.querySelectorAll('input').forEach(input => {
+                        input.name = input.name.replace(/Components\[\d+\]/, `Components[${idx}]`);
+                    });
+                });
+            }
+        });
+    </script>
+}

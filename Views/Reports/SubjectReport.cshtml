@@ -1,0 +1,240 @@
+@model InternalMarksSystem.ViewModels.SubjectReportViewModel
+@{
+    ViewData["Title"] = $"Subject Analytics - {Model.Subject?.SubjectCode}";
+    var stats = Model.Statistics;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 no-print">
+    <div>
+        <div class="d-flex align-items-center gap-2">
+            <h3 class="fw-bold text-dark mb-0">Subject Academic Performance Report</h3>
+            <span class="badge bg-light text-dark border font-monospace fs-6">@Model.Subject?.SubjectCode</span>
+        </div>
+        <p class="text-muted small mb-0">
+            @Model.Subject?.SubjectName &bull; @Model.Subject?.Department?.Name &bull; Semester @Model.Subject?.Semester?.Name
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="ExportCsv" asp-route-reportType="subject" asp-route-id="@Model.Subject?.Id" class="btn btn-outline-success btn-sm">
+            <i class="bi bi-file-earmark-excel me-1"></i> Export to Excel (CSV)
+        </a>
+        <button type="button" class="btn btn-outline-primary btn-sm" onclick="window.print();">
+            <i class="bi bi-printer me-1"></i> Print Report
+        </button>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+    </div>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-2">
+        <div class="metric-card">
+            <div class="metric-icon bg-primary-subtle text-primary">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <div class="metric-value">@stats.TotalEvaluated</div>
+            <div class="metric-label">Evaluated Students</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-2">
+        <div class="metric-card">
+            <div class="metric-icon bg-info-subtle text-info">
+                <i class="bi bi-calculator"></i>
+            </div>
+            <div class="metric-value text-info">@stats.AverageScore.ToString("0.##")</div>
+            <div class="metric-label">Class Average</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-2">
+        <div class="metric-card">
+            <div class="metric-icon bg-success-subtle text-success">
+                <i class="bi bi-trophy-fill"></i>
+            </div>
+            <div class="metric-value text-success">@stats.HighestScore.ToString("0.##")</div>
+            <div class="metric-label">Highest Score</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-2">
+        <div class="metric-card">
+            <div class="metric-icon bg-danger-subtle text-danger">
+                <i class="bi bi-arrow-down-circle"></i>
+            </div>
+            <div class="metric-value text-danger">@stats.LowestScore.ToString("0.##")</div>
+            <div class="metric-label">Lowest Score</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-2">
+        <div class="metric-card">
+            <div class="metric-icon bg-success-subtle text-success">
+                <i class="bi bi-check2-circle"></i>
+            </div>
+            <div class="metric-value text-success">@stats.PassPercentage.ToString("0.##")%</div>
+            <div class="metric-label">Pass Percentage</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-2">
+        <div class="metric-card">
+            <div class="metric-icon bg-warning-subtle text-warning">
+                <i class="bi bi-pie-chart-fill"></i>
+            </div>
+            <div class="metric-value text-muted">@stats.PassedCount / @stats.FailedCount</div>
+            <div class="metric-label">Pass / Fail Ratio</div>
+        </div>
+    </div>
+</div>
+
+<!-- Grade Distribution Chart -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="card card-academic h-100">
+            <div class="card-header fw-bold">
+                <i class="bi bi-bar-chart-fill text-primary me-2"></i>Grade Frequency Distribution
+            </div>
+            <div class="card-body">
+                <canvas id="gradeChart" style="max-height: 250px;"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card card-academic h-100">
+            <div class="card-header fw-bold">
+                <i class="bi bi-pie-chart-fill text-primary me-2"></i>Pass vs Fail Ratio
+            </div>
+            <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                <canvas id="pfChart" style="max-height: 200px;"></canvas>
+                <div class="d-flex justify-content-center gap-4 mt-3 small">
+                    <span class="text-success fw-bold"><i class="bi bi-circle-fill me-1"></i> Passed: @stats.PassedCount</span>
+                    <span class="text-danger fw-bold"><i class="bi bi-circle-fill me-1"></i> Failed: @stats.FailedCount</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Student Marks Table -->
+<div class="card card-academic shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-bold"><i class="bi bi-table text-primary me-2"></i>Student Performance Ranking</span>
+        <span class="badge bg-light text-secondary border">Total Students: @Model.MarksList.Count</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-academic align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Enrollment No</th>
+                        <th>Student Name</th>
+                        <th>Component Scores</th>
+                        <th>Final Internal Score</th>
+                        <th>Percentage</th>
+                        <th>Grade</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.MarksList.Any())
+                    {
+                        int rank = 1;
+                        @foreach (var m in Model.MarksList)
+                        {
+                            <tr>
+                                <td><span class="badge bg-light text-dark border">#@(rank++)</span></td>
+                                <td><code>@m.Student?.EnrollmentNumber</code></td>
+                                <td class="fw-semibold">@m.Student?.FullName</td>
+                                <td>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        @foreach (var det in m.Details.OrderBy(d => d.AssessmentComponent?.DisplayOrder))
+                                        {
+                                            <span class="badge bg-light text-secondary border small">
+                                                @det.AssessmentComponent?.Name: <strong>@det.MarksObtained.ToString("0.##")</strong>
+                                            </span>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="fw-bold text-primary fs-6">@m.CalculatedTotal.ToString("0.##")</span>
+                                    <span class="text-muted small">/ @m.MaxTotal.ToString("0.#")</span>
+                                </td>
+                                <td>@m.Percentage.ToString("0.##")%</td>
+                                <td><span class="badge badge-grade grade-@(m.Grade.Replace("+", "plus"))">@m.Grade</span></td>
+                                <td>
+                                    @if (m.IsPass)
+                                    {
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"><i class="bi bi-check-circle me-1"></i>Pass</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1"><i class="bi bi-x-circle me-1"></i>Fail</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">No marks records available for this subject.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Grade Distribution Chart
+        const gradeCtx = document.getElementById('gradeChart');
+        if (gradeCtx) {
+            new Chart(gradeCtx, {
+                type: 'bar',
+                data: {
+                    labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(stats.GradeDistribution.Keys)),
+                    datasets: [{
+                        label: 'Number of Students',
+                        data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(stats.GradeDistribution.Values)),
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Pass Fail Donut
+        const pfCtx = document.getElementById('pfChart');
+        if (pfCtx) {
+            new Chart(pfCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Passed', 'Failed'],
+                    datasets: [{
+                        data: [@stats.PassedCount, @stats.FailedCount],
+                        backgroundColor: ['#22c55e', '#ef4444'],
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+    </script>
+}

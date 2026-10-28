@@ -1,0 +1,83 @@
+@model InternalMarksSystem.Models.Subject
+@{
+    ViewData["Title"] = "Add Subject";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card card-academic shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="bi bi-book-fill text-primary me-2"></i> Add New Academic Subject</span>
+                <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i> Back to List</a>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label asp-for="SubjectCode" class="form-label"></label>
+                            <input asp-for="SubjectCode" class="form-control" placeholder="e.g. CS501" />
+                            <span asp-validation-for="SubjectCode" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-8">
+                            <label asp-for="SubjectName" class="form-label"></label>
+                            <input asp-for="SubjectName" class="form-control" placeholder="e.g. Advanced Database Systems" />
+                            <span asp-validation-for="SubjectName" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="DepartmentId" class="form-label"></label>
+                            <select asp-for="DepartmentId" class="form-select" asp-items="ViewBag.DepartmentId">
+                                <option value="">-- Select Department --</option>
+                            </select>
+                            <span asp-validation-for="DepartmentId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="SemesterId" class="form-label"></label>
+                            <select asp-for="SemesterId" class="form-select" asp-items="ViewBag.SemesterId">
+                                <option value="">-- Select Semester --</option>
+                            </select>
+                            <span asp-validation-for="SemesterId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="Credits" class="form-label"></label>
+                            <input asp-for="Credits" class="form-control" />
+                            <span asp-validation-for="Credits" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="MaxInternalMarks" class="form-label"></label>
+                            <input asp-for="MaxInternalMarks" class="form-control" />
+                            <span asp-validation-for="MaxInternalMarks" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="PassingMarks" class="form-label"></label>
+                            <input asp-for="PassingMarks" class="form-control" />
+                            <span asp-validation-for="PassingMarks" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mt-3 py-2 small mb-0">
+                        <i class="bi bi-info-circle me-1"></i> Creating this subject will automatically configure default assessment components (Internal Test 1: 30%, Internal Test 2: 30%, Assignments: 20%, Practical/Viva: 20%). You can customize them anytime via the <strong>Configure Components</strong> menu.
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-save me-1"></i> Create Subject
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

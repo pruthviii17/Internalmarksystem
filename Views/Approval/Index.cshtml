@@ -1,0 +1,113 @@
+@model IEnumerable<InternalMarksSystem.ViewModels.ApprovalSubmissionGroupViewModel>
+@{
+    ViewData["Title"] = "Submissions & Result Publication";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="fw-bold text-dark mb-0">Examination Approvals & Publication</h3>
+        <p class="text-muted small mb-0">
+            HOD / Admin review pipeline: <strong>Draft &rarr; Submitted &rarr; Approved &rarr; Published</strong>
+        </p>
+    </div>
+</div>
+
+<div class="card card-academic shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-academic align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Department</th>
+                        <th>Semester</th>
+                        <th>Faculty Evaluator</th>
+                        <th>Status Pipeline</th>
+                        <th class="text-end">Administrative Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Any())
+                    {
+                        @foreach (var g in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-bold text-dark">@g.SubjectName</div>
+                                    <span class="badge bg-light text-dark border font-monospace">@g.SubjectCode</span>
+                                </td>
+                                <td>@g.DepartmentName</td>
+                                <td><span class="badge bg-light text-secondary border">@g.SemesterName</span></td>
+                                <td>
+                                    <span class="fw-semibold text-primary"><i class="bi bi-person me-1"></i>@g.FacultyName</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        @if (g.SubmittedCount > 0)
+                                        {
+                                            <span class="badge badge-status badge-submitted" title="Awaiting your review">
+                                                <i class="bi bi-hourglass-split"></i> @g.SubmittedCount Submitted
+                                            </span>
+                                        }
+                                        @if (g.ApprovedCount > 0)
+                                        {
+                                            <span class="badge badge-status badge-approved" title="Approved, ready to publish">
+                                                <i class="bi bi-check2-all"></i> @g.ApprovedCount Approved
+                                            </span>
+                                        }
+                                        @if (g.PublishedCount > 0)
+                                        {
+                                            <span class="badge badge-status badge-published" title="Visible to students">
+                                                <i class="bi bi-check-circle-fill"></i> @g.PublishedCount Published
+                                            </span>
+                                        }
+                                        @if (g.RejectedCount > 0)
+                                        {
+                                            <span class="badge badge-status badge-rejected" title="Sent back for revision">
+                                                <i class="bi bi-exclamation-triangle-fill"></i> @g.RejectedCount Rejected
+                                            </span>
+                                        }
+                                        @if (g.DraftCount > 0)
+                                        {
+                                            <span class="badge badge-status badge-draft" title="Working draft by faculty">
+                                                <i class="bi bi-pencil"></i> @g.DraftCount Draft
+                                            </span>
+                                        }
+                                    </div>
+                                </td>
+                                <td class="text-end">
+                                    @if (g.SubmittedCount > 0)
+                                    {
+                                        <a asp-action="Review" asp-route-subjectId="@g.SubjectId" asp-route-semesterId="@g.SemesterId" class="btn btn-warning btn-sm fw-semibold shadow-sm">
+                                            <i class="bi bi-patch-check-fill me-1"></i> Review Submissions
+                                        </a>
+                                    }
+                                    @if (g.ApprovedCount > 0)
+                                    {
+                                        <form asp-action="Publish" method="post" class="d-inline" onsubmit="return confirm('Publish results for @g.SubjectCode? Students will immediately be able to view their scores.');">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="subjectId" value="@g.SubjectId" />
+                                            <input type="hidden" name="semesterId" value="@g.SemesterId" />
+                                            <button type="submit" class="btn btn-success btn-sm fw-semibold shadow-sm ms-1">
+                                                <i class="bi bi-megaphone-fill me-1"></i> Publish Results
+                                            </button>
+                                        </form>
+                                    }
+                                    <a asp-controller="Marks" asp-action="ViewSubjectMarks" asp-route-subjectId="@g.SubjectId" asp-route-semesterId="@g.SemesterId" class="btn btn-outline-secondary btn-sm ms-1" title="View Detailed Table">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">No subjects found in the academic registry.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

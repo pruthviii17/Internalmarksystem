@@ -1,0 +1,167 @@
+@model InternalMarksSystem.ViewModels.StudentReportViewModel
+@{
+    ViewData["Title"] = $"Grade Card - {Model.Student?.EnrollmentNumber}";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3 no-print">
+    <div>
+        <h3 class="fw-bold text-dark mb-0">Student Grade Card & Marksheet</h3>
+        <p class="text-muted small mb-0">Official internal continuous evaluation statement</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-primary btn-sm" onclick="window.print();">
+            <i class="bi bi-printer-fill me-1"></i> Print / Save as PDF
+        </button>
+        <a asp-action="ExportCsv" asp-route-reportType="student" asp-route-id="@Model.Student?.Id" class="btn btn-outline-success btn-sm">
+            <i class="bi bi-file-earmark-excel me-1"></i> Export CSV
+        </a>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+    </div>
+</div>
+
+<!-- Formal Marksheet Card -->
+<div class="card card-academic shadow-sm p-4 print-container bg-white">
+    <!-- Academic Header -->
+    <div class="text-center border-bottom pb-4 mb-4">
+        <div class="d-flex align-items-center justify-content-center gap-3 mb-2">
+            <i class="bi bi-mortarboard-fill fs-1 text-primary"></i>
+            <div>
+                <h4 class="fw-bold text-uppercase mb-0 text-dark">College of Engineering & Technology</h4>
+                <div class="text-muted small text-uppercase letter-spacing-1">Affiliated to State University &bull; Approved by AICTE</div>
+            </div>
+        </div>
+        <h5 class="fw-bold text-primary mt-3 mb-1">STATEMENT OF INTERNAL ASSESSMENT MARKS</h5>
+        <div class="text-muted small">Academic Session 2024–2025 &bull; Odd Semester Evaluation</div>
+    </div>
+
+    <!-- Student Metadata Box -->
+    <div class="border rounded p-3 mb-4 bg-light">
+        <div class="row g-3">
+            <div class="col-sm-4">
+                <span class="text-muted small text-uppercase d-block">Student Name</span>
+                <span class="fw-bold fs-6 text-dark">@Model.Student?.FullName</span>
+            </div>
+            <div class="col-sm-4">
+                <span class="text-muted small text-uppercase d-block">Enrollment Number</span>
+                <span class="badge bg-white text-dark border font-monospace fs-6 px-3 py-1">@Model.Student?.EnrollmentNumber</span>
+            </div>
+            <div class="col-sm-4">
+                <span class="text-muted small text-uppercase d-block">Academic Department</span>
+                <span class="fw-semibold">@Model.Student?.Department?.Name</span>
+            </div>
+            <div class="col-sm-4">
+                <span class="text-muted small text-uppercase d-block">Semester</span>
+                <span class="fw-semibold">@Model.Semester?.Name</span>
+            </div>
+            <div class="col-sm-4">
+                <span class="text-muted small text-uppercase d-block">Enrollment Year</span>
+                <span class="fw-semibold">@Model.Student?.EnrollmentYear</span>
+            </div>
+            <div class="col-sm-4">
+                <span class="text-muted small text-uppercase d-block">Statement Date</span>
+                <span class="fw-semibold">@DateTime.UtcNow.ToString("dd MMMM yyyy")</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Marks Table -->
+    <div class="table-responsive mb-4">
+        <table class="table table-bordered table-academic align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th style="width: 12%;">Course Code</th>
+                    <th style="width: 30%;">Course Title</th>
+                    <th style="width: 8%;" class="text-center">Credits</th>
+                    <th style="width: 10%;" class="text-center">Max Marks</th>
+                    <th style="width: 10%;" class="text-center">Pass Marks</th>
+                    <th style="width: 10%;" class="text-center">Marks Obtained</th>
+                    <th style="width: 10%;" class="text-center">Percentage</th>
+                    <th style="width: 10%;" class="text-center">Grade</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Results.Any())
+                {
+                    @foreach (var res in Model.Results)
+                    {
+                        <tr>
+                            <td><code>@res.SubjectCode</code></td>
+                            <td>
+                                <div class="fw-semibold">@res.SubjectName</div>
+                                @if (res.ComponentDetails.Any())
+                                {
+                                    <div class="small text-muted mt-1">
+                                        @string.Join(" | ", res.ComponentDetails.Select(c => $"{c.AssessmentComponent?.Name}: {c.MarksObtained:0.##}/{c.AssessmentComponent?.MaxMarks:0.#}"))
+                                    </div>
+                                }
+                            </td>
+                            <td class="text-center">@res.Credits</td>
+                            <td class="text-center">@res.MaxMarks.ToString("0.#")</td>
+                            <td class="text-center">@res.PassingMarks.ToString("0.#")</td>
+                            <td class="text-center fw-bold text-primary">@res.ObtainedMarks.ToString("0.##")</td>
+                            <td class="text-center">@res.Percentage.ToString("0.##")%</td>
+                            <td class="text-center">
+                                <span class="badge badge-grade grade-@(res.Grade.Replace("+", "plus"))">@res.Grade</span>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">No published internal marks found for this student.</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot class="table-light">
+                <tr class="fw-bold">
+                    <td colspan="2" class="text-end">Aggregate Totals:</td>
+                    <td class="text-center">@Model.TotalCredits</td>
+                    <td class="text-center">@Model.TotalMaxMarks.ToString("0.#")</td>
+                    <td></td>
+                    <td class="text-center text-primary">@Model.TotalObtainedMarks.ToString("0.##")</td>
+                    <td class="text-center">@Model.OverallPercentage.ToString("0.##")%</td>
+                    <td class="text-center">
+                        @if (Model.OverallResult == "Pass")
+                        {
+                            <span class="badge bg-success">PASS</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">FAIL</span>
+                        }
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <!-- Grading Scale Key -->
+    <div class="border rounded p-3 mb-4 bg-light small">
+        <span class="fw-bold text-uppercase d-block mb-1">Grading System:</span>
+        <div class="d-flex flex-wrap gap-3">
+            <span><strong>O:</strong> Outstanding (&ge;90%)</span>
+            <span><strong>A+:</strong> Excellent (&ge;80%)</span>
+            <span><strong>A:</strong> Very Good (&ge;70%)</span>
+            <span><strong>B+:</strong> Good (&ge;60%)</span>
+            <span><strong>B:</strong> Above Average (&ge;50%)</span>
+            <span><strong>C:</strong> Pass (&ge;40%)</span>
+            <span><strong>F:</strong> Fail (&lt;40%)</span>
+        </div>
+    </div>
+
+    <!-- Signature Footer -->
+    <div class="row pt-5 mt-4 text-center">
+        <div class="col-4">
+            <div class="border-top pt-2 text-muted small fw-semibold">Subject In-Charge / Faculty</div>
+        </div>
+        <div class="col-4">
+            <div class="border-top pt-2 text-muted small fw-semibold">Head of Department (HOD)</div>
+        </div>
+        <div class="col-4">
+            <div class="border-top pt-2 text-muted small fw-semibold">Controller of Examinations</div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,145 @@
+@model IEnumerable<InternalMarksSystem.Models.Subject>
+@{
+    ViewData["Title"] = "Academic Performance Reports";
+    var matchedStudent = ViewBag.MatchedStudent as InternalMarksSystem.Models.Student;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="fw-bold text-dark mb-0">Academic Reports & Transcripts</h3>
+        <p class="text-muted small mb-0">Generate student marksheets, subject analytics, semester distributions, and export data</p>
+    </div>
+</div>
+
+<!-- Search by Enrollment or Filter -->
+<div class="row g-3 mb-4">
+    <div class="col-md-5">
+        <div class="card card-academic shadow-sm h-100">
+            <div class="card-header fw-bold">
+                <i class="bi bi-person-search text-primary me-2"></i>Search Student Marksheet
+            </div>
+            <div class="card-body">
+                <form method="get" asp-action="Index">
+                    <div class="mb-3">
+                        <label class="form-label small">Enrollment Number</label>
+                        <div class="input-group">
+                            <input type="text" name="searchEnrollment" class="form-control" placeholder="e.g. 2022CSE001" value="@ViewBag.SearchEnrollment" />
+                            <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Search</button>
+                        </div>
+                    </div>
+                </form>
+
+                @if (matchedStudent != null)
+                {
+                    <div class="alert alert-success py-2 px-3 small d-flex justify-content-between align-items-center mb-0">
+                        <div>
+                            <strong>@matchedStudent.FullName</strong> (<code>@matchedStudent.EnrollmentNumber</code>)
+                        </div>
+                        <a asp-action="StudentReport" asp-route-studentId="@matchedStudent.Id" class="btn btn-success btn-sm">
+                            <i class="bi bi-printer me-1"></i> View Marksheet
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        <div class="card card-academic shadow-sm h-100">
+            <div class="card-header fw-bold">
+                <i class="bi bi-funnel text-primary me-2"></i>Filter Subject & Semester Reports
+            </div>
+            <div class="card-body">
+                <form method="get" asp-action="Index" class="row g-2">
+                    <div class="col-sm-4">
+                        <label class="form-label small">Department</label>
+                        <select name="departmentId" asp-items="ViewBag.Departments" class="form-select form-select-sm">
+                            <option value="">-- All Departments --</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-4">
+                        <label class="form-label small">Semester</label>
+                        <select name="semesterId" asp-items="ViewBag.Semesters" class="form-select form-select-sm">
+                            <option value="">-- All Semesters --</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                            <i class="bi bi-filter me-1"></i> Apply Filter
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Subjects Report Table -->
+<div class="card card-academic shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-bold"><i class="bi bi-bar-chart-fill text-primary me-2"></i>Subject Performance Analysis</span>
+        <a asp-action="SemesterReport" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-grid-3x3 me-1"></i> View Semester Summary Report
+        </a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-academic align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Subject Code</th>
+                        <th>Subject Name</th>
+                        <th>Department</th>
+                        <th>Semester</th>
+                        <th>Total Records</th>
+                        <th>Published Results</th>
+                        <th class="text-end">Export & Reports</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Any())
+                    {
+                        @foreach (var sub in Model)
+                        {
+                            int totalMarks = sub.InternalMarks.Count;
+                            int publishedCount = sub.InternalMarks.Count(m => m.Status == InternalMarksSystem.Models.MarkStatus.Published);
+                            <tr>
+                                <td><code>@sub.SubjectCode</code></td>
+                                <td class="fw-semibold">@sub.SubjectName</td>
+                                <td>@sub.Department?.Name</td>
+                                <td><span class="badge bg-light text-secondary border">@sub.Semester?.Name</span></td>
+                                <td>@totalMarks students</td>
+                                <td>
+                                    @if (publishedCount > 0)
+                                    {
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                            @publishedCount Published
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning-subtle text-warning">Pending</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <a asp-action="SubjectReport" asp-route-subjectId="@sub.Id" class="btn btn-outline-info btn-sm">
+                                        <i class="bi bi-graph-up me-1"></i> Analytics
+                                    </a>
+                                    <a asp-action="ExportCsv" asp-route-reportType="subject" asp-route-id="@sub.Id" class="btn btn-outline-success btn-sm ms-1" title="Download Excel CSV">
+                                        <i class="bi bi-file-earmark-excel"></i> CSV
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">No subjects found matching current filter options.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

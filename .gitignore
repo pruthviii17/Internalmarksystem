@@ -1,0 +1,43 @@
+## .NET Core / ASP.NET Core
+bin/
+obj/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+*.userprefs
+
+## Visual Studio / VS Code
+.vs/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+## Local database & runtime files
+*.db
+*.db-shm
+*.db-wal
+internal_marks.db
+appsettings.Production.json
+
+## Logs & temporary files
+*.log
+[Tt]emp/
+[Tt]mp/
+
+## Secrets and local configuration
+.env
+.env.*
+!.env.example
+appsettings.Development.json
+secrets.json
+
+## Local database files
+*.sqlite
+*.sqlite3
+
+## Build outputs
+publish/
+artifacts/

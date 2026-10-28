@@ -1,0 +1,112 @@
+@model InternalMarksSystem.Controllers.DiagnosticsViewModel
+@{
+    ViewData["Title"] = "System Self-Test & Diagnostics";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold text-dark mb-0">System Verification & Diagnostics</h3>
+        <p class="text-muted small mb-0">Automated integration test verifying calculation engine, database seeding, constraints, and approval states</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Diagnostics" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-arrow-clockwise me-1"></i> Re-Run Diagnostics
+        </a>
+        <a asp-controller="Dashboard" asp-action="Index" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- Summary Card -->
+<div class="card card-academic shadow-sm mb-4">
+    <div class="card-body p-4">
+        <div class="row align-items-center">
+            <div class="col-md-4 text-center border-end">
+                @if (Model.AllPassed)
+                {
+                    <div class="d-inline-flex align-items-center justify-content-center bg-success-subtle text-success rounded-circle p-3 mb-2" style="width: 72px; height: 72px;">
+                        <i class="bi bi-check2-all fs-1"></i>
+                    </div>
+                    <h5 class="fw-bold text-success mb-0">All System Checks Passed</h5>
+                    <span class="text-muted small">Application is 100% operational</span>
+                }
+                else
+                {
+                    <div class="d-inline-flex align-items-center justify-content-center bg-danger-subtle text-danger rounded-circle p-3 mb-2" style="width: 72px; height: 72px;">
+                        <i class="bi bi-x-circle fs-1"></i>
+                    </div>
+                    <h5 class="fw-bold text-danger mb-0">Verification Warning</h5>
+                    <span class="text-muted small">@Model.FailedTests test(s) failed</span>
+                }
+            </div>
+            <div class="col-md-8 ps-md-4 mt-3 mt-md-0">
+                <div class="row g-3 text-center">
+                    <div class="col-4">
+                        <div class="text-muted small text-uppercase fw-semibold">Total Checks</div>
+                        <div class="fs-3 fw-bold text-dark">@Model.TotalTests</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-muted small text-uppercase fw-semibold">Passed</div>
+                        <div class="fs-3 fw-bold text-success">@Model.PassedTests</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-muted small text-uppercase fw-semibold">Failed</div>
+                        <div class="fs-3 fw-bold @(Model.FailedTests > 0 ? "text-danger" : "text-muted")">@Model.FailedTests</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Diagnostics Table -->
+<div class="card card-academic shadow-sm">
+    <div class="card-header fw-bold">
+        <i class="bi bi-clipboard2-check-fill text-primary me-2"></i>Detailed Diagnostic Checks
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-academic align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Category</th>
+                        <th>Test Assertion</th>
+                        <th>Expected</th>
+                        <th>Actual Result</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>
+                                @if (item.Passed)
+                                {
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                                        <i class="bi bi-check-circle-fill me-1"></i> PASSED
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
+                                        <i class="bi bi-x-circle-fill me-1"></i> FAILED
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-secondary border">@item.TestCategory</span>
+                            </td>
+                            <td class="fw-semibold">@item.TestName</td>
+                            <td><code>@item.Expected</code></td>
+                            <td><strong class="@(item.Passed ? "text-success" : "text-danger")">@item.Actual</strong></td>
+                            <td class="small text-muted">@item.Notes</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
